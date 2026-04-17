@@ -1,5 +1,19 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+const parsePayload = async (response) => {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  const text = await response.text();
+  return {
+    error: {
+      message: text || `Unexpected response (${response.status})`,
+    },
+  };
+};
+
 export const analyzeResume = async ({ file, formFields }) => {
   const formData = new FormData();
   formData.append("resume", file);
@@ -14,7 +28,7 @@ export const analyzeResume = async ({ file, formFields }) => {
     body: formData,
   });
 
-  const payload = await response.json();
+  const payload = await parsePayload(response);
 
   if (!response.ok) {
     const baseMessage = payload?.error?.message || "Analysis failed";
@@ -27,7 +41,7 @@ export const analyzeResume = async ({ file, formFields }) => {
 
 export const getCodingQuestions = async () => {
   const response = await fetch(`${API_BASE_URL}/api/coding/problems`);
-  const payload = await response.json();
+  const payload = await parsePayload(response);
 
   if (!response.ok) {
     throw new Error(payload?.error?.message || "Failed to fetch coding questions");
@@ -45,7 +59,7 @@ export const submitCode = async ({ problemId, code, language }) => {
     body: JSON.stringify({ problemId, code, language }),
   });
 
-  const payload = await response.json();
+  const payload = await parsePayload(response);
 
   if (!response.ok) {
     throw new Error(payload?.error?.message || "Failed to submit code");
@@ -63,7 +77,7 @@ export const runCode = async ({ problemId, code, language }) => {
     body: JSON.stringify({ problemId, code, language }),
   });
 
-  const payload = await response.json();
+  const payload = await parsePayload(response);
 
   if (!response.ok) {
     throw new Error(payload?.error?.message || "Failed to run code");

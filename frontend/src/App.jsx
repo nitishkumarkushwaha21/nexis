@@ -11,6 +11,9 @@ const ROUTES = {
 };
 
 const getPath = () => {
+  const hashPath = window.location.hash.replace(/^#/, "");
+  if (hashPath in ROUTES) return hashPath;
+
   const pathname = window.location.pathname;
   if (pathname in ROUTES) return pathname;
   return "/resume";
@@ -20,19 +23,20 @@ function App() {
   const [activePath, setActivePath] = useState(getPath);
 
   useEffect(() => {
-    if (!(window.location.pathname in ROUTES)) {
-      window.history.replaceState(null, "", "/resume");
+    const hashPath = window.location.hash.replace(/^#/, "");
+    if (!(hashPath in ROUTES)) {
+      window.history.replaceState(null, "", "#/resume");
     }
 
-    const onPopState = () => setActivePath(getPath());
-    window.addEventListener("popstate", onPopState);
+    const onHashChange = () => setActivePath(getPath());
+    window.addEventListener("hashchange", onHashChange);
 
-    return () => window.removeEventListener("popstate", onPopState);
+    return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   const navigate = (path) => {
     if (path === activePath) return;
-    window.history.pushState(null, "", path);
+    window.location.hash = path;
     setActivePath(path);
   };
 
