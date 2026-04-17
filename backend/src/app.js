@@ -8,6 +8,27 @@ const codingRoutes = require("./routes/codingRoutes");
 
 const app = express();
 
+const normalizeOrigin = (origin) => String(origin || "").trim().replace(/\/$/, "").toLowerCase();
+const allowedOrigins = new Set((config.corsOrigins || []).map(normalizeOrigin));
+
+const isAllowedOrigin = (origin) => {
+  const normalizedOrigin = normalizeOrigin(origin);
+  if (!normalizedOrigin) {
+    return false;
+  }
+
+  if (allowedOrigins.has(normalizedOrigin)) {
+    return true;
+  }
+
+  // Keep preview deployments working when frontend is hosted on Vercel.
+  if (normalizedOrigin.endsWith(".vercel.app")) {
+    return true;
+  }
+
+  return false;
+};
+
 app.use(
   cors({
     origin(origin, callback) {
@@ -16,7 +37,7 @@ app.use(
         return;
       }
 
-      if (config.corsOrigins.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
